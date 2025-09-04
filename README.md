@@ -7,17 +7,17 @@ Graphics (F2025).
 
 ### Build the project
 ```bash
-make build
+./build.sh
 ```
 
 ### Rebuild the project
 ```bash
-make rebuild
+./build.sh rebuild
 ```
 
 ### Clean artifacts
 ```bash
-make clean
+./build.sh clean
 ```
 
 ## Output Binaries
