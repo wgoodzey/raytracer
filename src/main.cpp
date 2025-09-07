@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 
 #define image_width 256
@@ -8,12 +9,47 @@
 #define G 1
 #define B 2
 
-#define normalize(i, dimention) \
-  static_cast<uint8_t>(static_cast<double>(i) / (dimention - 1) * 255.999)
+#define normalize(i, dimension) \
+  static_cast<uint8_t>(static_cast<double>(i) / (dimension - 1) * 255.999)
 
 uint8_t raster[image_height][image_width][3];
 
+int write_image(bool readable) {
+  std::ofstream file("image.ppm", std::ios::binary);
+
+  if (file.is_open()) {
+    file << "P6\n" << image_width << " " << image_height << "\n255\n";
+    file.write(reinterpret_cast<const char *>(raster),
+               image_width * image_height * 3 * sizeof(char));
+  }
+
+  if (readable) {
+    std::ofstream readable_file("readable-image.ppm");
+    if (readable_file.is_open()) {
+      readable_file << "P3\n"
+                    << image_width << " " << image_height << "\n255\n";
+      for (int j = 0; j < image_height; j++) {
+        for (int i = 0; i < image_width; i++) {
+          readable_file << static_cast<uint16_t>(raster[j][i][R]) << " "
+                        << static_cast<uint16_t>(raster[j][i][G]) << " "
+                        << static_cast<uint16_t>(raster[j][i][B]) << "\n";
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
 int main(int argc, char *argv[]) {
+  bool readable = false;
+
+  for (int i = 0; i < argc; ++i) {
+    if (std::strcmp(argv[i], "-readable") == 0) {
+      readable = true;
+    }
+  }
+
   for (int j = 0; j < image_height; j++) {
     for (int i = 0; i < image_width; i++) {
       raster[j][i][R] = normalize(i, image_width);
@@ -22,12 +58,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  std::ofstream file("image.ppm", std::ios::binary);
-  if (file.is_open()) {
-    file << "P6\n" << image_width << " " << image_height << "\n255\n";
-    file.write(reinterpret_cast<const char *>(raster),
-               image_width * image_height * 3 * sizeof(char));
-  }
+  write_image(readable);
 
   return 0;
 }
