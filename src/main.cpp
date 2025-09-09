@@ -2,7 +2,7 @@
 #include <cstring>
 #include <fstream>
 
-#include "vec3.h"
+#include "color.h"
 
 #define image_width 256
 #define image_height 256
@@ -14,7 +14,7 @@
 #define normalize(i, dimension) \
   static_cast<uint8_t>(static_cast<double>(i) / (dimension - 1) * 255.999)
 
-vec3<uint8_t> raster[image_height][image_width];
+color<uint8_t> raster[image_height][image_width];
 
 int write_image() {
   std::ofstream file("image.ppm", std::ios::binary);
@@ -31,8 +31,8 @@ int write_image() {
 int main(int argc, char *argv[]) {
   for (int j = 0; j < image_height; j++) {
     for (int i = 0; i < image_width; i++) {
-      raster[j][i] = vec3<uint8_t>(normalize(i, image_width),
-                                   normalize(j, image_height), 0);
+      raster[j][i] = color<uint8_t>(normalize(i, image_width),
+                                    normalize(j, image_height), 0);
     }
   }
 

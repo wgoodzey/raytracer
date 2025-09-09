@@ -3,6 +3,7 @@
 
 #include "vec3.h"
 
-using color = vec3;
+template <typename T>
+using color = vec3<T>;
 
 #endif  // COLOR_H
