@@ -42,6 +42,9 @@ class vec3 {
 };
 
 template <typename T>
+using point3 = vec3<T>;
+
+template <typename T>
 inline std::ostream& operator<<(std::ostream& out, const vec3<T>& v) {
   return out << v.e[0] << " " << v.e[1] << " " << v.e[2];
 }
