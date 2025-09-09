@@ -34,7 +34,7 @@ class vec3 {
     return *this;
   }
 
-  constexpr vec3& operator/(double t) { return *this *= 1 / t; }
+  constexpr vec3& operator/=(double t) { return *this *= 1 / t; }
 
   constexpr T length_squared() const {
     return e[0] * e[0] + e[1] * e[1] + e[2] * e[2];
