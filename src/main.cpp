@@ -14,7 +14,7 @@
 
 uint8_t raster[image_height][image_width][3];
 
-int write_image(bool readable) {
+int write_image() {
   std::ofstream file("image.ppm", std::ios::binary);
 
   if (file.is_open()) {
@@ -23,33 +23,10 @@ int write_image(bool readable) {
                image_width * image_height * 3 * sizeof(char));
   }
 
-  if (readable) {
-    std::ofstream readable_file("readable-image.ppm");
-    if (readable_file.is_open()) {
-      readable_file << "P3\n"
-                    << image_width << " " << image_height << "\n255\n";
-      for (int j = 0; j < image_height; j++) {
-        for (int i = 0; i < image_width; i++) {
-          readable_file << static_cast<uint16_t>(raster[j][i][R]) << " "
-                        << static_cast<uint16_t>(raster[j][i][G]) << " "
-                        << static_cast<uint16_t>(raster[j][i][B]) << "\n";
-        }
-      }
-    }
-  }
-
   return 0;
 }
 
 int main(int argc, char *argv[]) {
-  bool readable = false;
-
-  for (int i = 0; i < argc; ++i) {
-    if (std::strcmp(argv[i], "-readable") == 0) {
-      readable = true;
-    }
-  }
-
   for (int j = 0; j < image_height; j++) {
     for (int i = 0; i < image_width; i++) {
       raster[j][i][R] = normalize(i, image_width);
@@ -58,7 +35,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  write_image(readable);
+  write_image();
 
   return 0;
 }
