@@ -9,34 +9,36 @@ class vec3 {
  public:
   T e[3];
 
-  vec3() : e{T(0), T(0), T(0)} {}
-  vec3(T e0, T e1, T e2) : e{e0, e1, e2} {}
+  constexpr vec3() : e{T(0), T(0), T(0)} {}
+  constexpr vec3(T e0, T e1, T e2) : e{e0, e1, e2} {}
 
-  T x() const { return e[0]; }
-  T y() const { return e[1]; }
-  T z() const { return e[2]; }
+  constexpr T x() const { return e[0]; }
+  constexpr T y() const { return e[1]; }
+  constexpr T z() const { return e[2]; }
 
-  vec3 operator-() const { return vec3(-e[0], -e[1], -e[2]); }
-  T operator[](int i) const { return e[i]; }
-  T& operator[](int i) { return e[i]; }
+  constexpr vec3 operator-() const { return vec3(-e[0], -e[1], -e[2]); }
+  constexpr T operator[](int i) const { return e[i]; }
+  constexpr T& operator[](int i) { return e[i]; }
 
-  vec3& operator+=(const vec3& v) {
+  constexpr vec3& operator+=(const vec3& v) {
     e[0] += v.e[0];
     e[1] += v.e[1];
     e[2] += v.e[2];
     return *this;
   }
 
-  vec3& operator*=(double t) {
+  constexpr vec3& operator*=(double t) {
     e[0] *= t;
     e[1] *= t;
     e[2] *= t;
     return *this;
   }
 
-  vec3& operator/(double t) { return *this *= 1 / t; }
+  constexpr vec3& operator/(double t) { return *this *= 1 / t; }
 
-  T length_squared() const { return e[0] * e[0] + e[1] * e[1] + e[2] * e[2]; }
+  constexpr T length_squared() const {
+    return e[0] * e[0] + e[1] * e[1] + e[2] * e[2];
+  }
 
   T length() const { return std::sqrt(length_squared()); }
 };
@@ -50,42 +52,42 @@ inline std::ostream& operator<<(std::ostream& out, const vec3<T>& v) {
 }
 
 template <typename T>
-inline vec3<T> operator+(const vec3<T>& u, const vec3<T>& v) {
+constexpr inline vec3<T> operator+(const vec3<T>& u, const vec3<T>& v) {
   return vec3(u.e[0] + v.e[0], u.e[1] + v.e[1], u.e[2] + v.e[2]);
 }
 
 template <typename T>
-inline vec3<T> operator-(const vec3<T>& u, const vec3<T>& v) {
+constexpr inline vec3<T> operator-(const vec3<T>& u, const vec3<T>& v) {
   return vec3(u.e[0] - v.e[0], u.e[1] - v.e[1], u.e[2] - v.e[2]);
 }
 
 template <typename T>
-inline vec3<T> operator*(const vec3<T>& u, const vec3<T>& v) {
+constexpr inline vec3<T> operator*(const vec3<T>& u, const vec3<T>& v) {
   return vec3(u.e[0] * v.e[0], u.e[1] * v.e[1], u.e[2] * v.e[2]);
 }
 
 template <typename T>
-inline vec3<T> operator*(double t, const vec3<T>& v) {
+constexpr inline vec3<T> operator*(double t, const vec3<T>& v) {
   return vec3(t * v.e[0], t * v.e[1], t * v.e[2]);
 }
 
 template <typename T>
-inline vec3<T> operator*(const vec3<T>& v, double t) {
+constexpr inline vec3<T> operator*(const vec3<T>& v, double t) {
   return t * v;
 }
 
 template <typename T>
-inline vec3<T> operator/(const vec3<T>& v, double t) {
+constexpr inline vec3<T> operator/(const vec3<T>& v, double t) {
   return (1 / t) * v;
 }
 
 template <typename T>
-inline auto dot(const vec3<T>& u, const vec3<T>& v) {
+constexpr inline auto dot(const vec3<T>& u, const vec3<T>& v) {
   return u.e[0] * v.e[0] + u.e[1] * v.e[1] + u.e[2] * v.e[2];
 }
 
 template <typename T>
-inline vec3<T> cross(const vec3<T>& u, const vec3<T>& v) {
+constexpr inline vec3<T> cross(const vec3<T>& u, const vec3<T>& v) {
   return vec3(u.e[1] * v.e[2] - u.e[2] * v.e[1],
               u.e[2] * v.e[0] - u.e[0] * v.e[2],
               u.e[0] * v.e[1] - u.e[1] * v.e[0]);
