@@ -1,5 +1,4 @@
-#ifndef RAY_H
-#define RAY_H
+#pragma once
 
 #include "color.h"
 #include "vec3.h"
@@ -27,5 +26,3 @@ inline color<double> ray_color(const ray& r) {
   return (1.0 - a) * color<double>(1.0, 1.0, 1.0) +
          a * color<double>(0.5, 0.7, 1.0);
 }
-
-#endif  // !RAY_H

@@ -1,5 +1,4 @@
-#ifndef VEC3_H
-#define VEC3_H
+#pragma once
 
 #include <cmath>
 #include <ostream>
@@ -97,5 +96,3 @@ template <typename T>
 inline vec3<T> unit_vector(const vec3<T>& v) {
   return v / v.length();
 }
-
-#endif  // VEC3_H
