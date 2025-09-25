@@ -13,7 +13,7 @@ class camera {
   void render(const hittable& world) {
     initialize();
 
-    color<uint8_t> raster[image_height][image_width];
+    std::vector<color<uint8_t>> raster(image_height * image_width);
 
     std::ofstream file("image.ppm", std::ios::binary);
 
@@ -25,13 +25,13 @@ class camera {
           pixel_color += ray_color(r, world);
         }
 
-        raster[j][i] = color_out(pixel_sample_scale * pixel_color);
+        raster[idx(i, j)] = color_out(pixel_sample_scale * pixel_color);
       }
     }
 
     if (file.is_open()) {
       file << "P6\n" << image_width << " " << image_height << "\n255\n";
-      file.write(reinterpret_cast<const char*>(raster),
+      file.write(reinterpret_cast<const char*>(raster.data()),
                  image_width * image_height * 3 * sizeof(char));
     }
   }
@@ -43,6 +43,8 @@ class camera {
   point3<double> pixel00_loc;
   vec3<double> pixel_delta_u;
   vec3<double> pixel_delta_v;
+
+  int idx(int i, int j) const { return j * image_width + i; }
 
   void initialize() {
     image_height = int(image_width / aspect_ratio);
