@@ -3,6 +3,8 @@
 #include <cmath>
 #include <ostream>
 
+#include "common.h"
+
 template <typename T>
 class vec3 {
  public:
@@ -40,6 +42,18 @@ class vec3 {
   }
 
   T length() const { return std::sqrt(length_squared()); }
+
+  static vec3<T> random() {
+    return vec3<T>(static_cast<T>(random_double()),
+                   static_cast<T>(random_double()),
+                   static_cast<T>(random_double()));
+  }
+
+  static vec3<T> random(T min, T max) {
+    return vec3<T>(static_cast<T>(random_double(min, max)),
+                   static_cast<T>(random_double(min, max)),
+                   static_cast<T>(random_double(min, max)));
+  }
 };
 
 template <typename T>
@@ -95,4 +109,22 @@ constexpr inline vec3<T> cross(const vec3<T>& u, const vec3<T>& v) {
 template <typename T>
 inline vec3<T> unit_vector(const vec3<T>& v) {
   return v / v.length();
+}
+
+template <typename T>
+inline vec3<T> random_unit_vector() {
+  while (true) {
+    auto p = vec3<T>::random(static_cast<T>(-1), static_cast<T>(1));
+    auto lensq = p.length_squared();
+    if (1e-160 < lensq && lensq <= static_cast<T>(1)) {
+      return p / std::sqrt(lensq);
+    }
+  }
+}
+
+template <typename T>
+inline vec3<T> random_on_hemisphere(const vec3<T>& normal) {
+  vec3<T> on_unit_sphere = random_unit_vector<T>();
+  return dot(on_unit_sphere, normal) > static_cast<T>(0.0) ? on_unit_sphere
+                                                           : -on_unit_sphere;
 }
