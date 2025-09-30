@@ -10,6 +10,8 @@ class camera {
   int image_width = 100;
   int samples_per_pixel = 10;
 
+  int idx(int i, int j) const { return j * image_width + i; }
+
   void render(const hittable& world) {
     initialize();
 
@@ -17,16 +19,38 @@ class camera {
 
     std::ofstream file("image.ppm", std::ios::binary);
 
-    for (int j = 0; j < image_height; j++) {
-      for (int i = 0; i < image_width; i++) {
-        color<double> pixel_color(0.0, 0.0, 0.0);
-        for (int sample = 0; sample < samples_per_pixel; sample++) {
-          ray r = get_ray(i, j);
-          pixel_color += ray_color(r, world);
-        }
+    const unsigned hw = std::thread::hardware_concurrency();
+    const unsigned num_threads = hw ? hw : 4;
 
-        raster[idx(i, j)] = color_out(pixel_sample_scale * pixel_color);
+    auto worker = [&](int y0, int y1) {
+      for (int j = y0; j < y1; j++) {
+        for (int i = 0; i < image_width; i++) {
+          color<double> pixel_color(0.0, 0.0, 0.0);
+          for (int sample = 0; sample < samples_per_pixel; sample++) {
+            ray r = get_ray(i, j);
+            pixel_color += ray_color(r, world);
+          }
+
+          raster[idx(i, j)] = color_out(pixel_sample_scale * pixel_color);
+        }
       }
+    };
+
+    std::vector<std::thread> threads;
+    threads.reserve(num_threads);
+    int row_per_thread = (image_height + static_cast<int>(num_threads) - 1) /
+                         static_cast<int>(num_threads);
+
+    int y0 = 0;
+    for (unsigned t = 0; t < num_threads; ++t) {
+      int y1 = std::min(image_height, y0 + row_per_thread);
+      if (y0 >= y1) break;
+      threads.emplace_back(worker, y0, y1);
+      y0 = y1;
+    }
+
+    for (auto& th : threads) {
+      th.join();
     }
 
     if (file.is_open()) {
@@ -43,8 +67,6 @@ class camera {
   point3<double> pixel00_loc;
   vec3<double> pixel_delta_u;
   vec3<double> pixel_delta_v;
-
-  int idx(int i, int j) const { return j * image_width + i; }
 
   void initialize() {
     image_height = int(image_width / aspect_ratio);
@@ -82,7 +104,8 @@ class camera {
   }
 
   vec3<double> sample_square() const {
-    return vec3<double>(random_double() - 0.5, random_double() - 0.5, 0);
+    return vec3<double>(random_double_threadsafe() - 0.5,
+                        random_double_threadsafe() - 0.5, 0);
   }
 
   color<double> ray_color(const ray& r, const hittable& world) const {
