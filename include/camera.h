@@ -9,6 +9,7 @@ class camera {
   double aspect_ratio = 1.0;
   int image_width = 100;
   int samples_per_pixel = 10;
+  int max_depth = 10;
 
   int idx(int i, int j) const { return j * image_width + i; }
 
@@ -28,7 +29,7 @@ class camera {
           color<double> pixel_color(0.0, 0.0, 0.0);
           for (int sample = 0; sample < samples_per_pixel; sample++) {
             ray r = get_ray(i, j);
-            pixel_color += ray_color(r, world);
+            pixel_color += ray_color(r, max_depth, world);
           }
 
           raster[idx(i, j)] = color_out(pixel_sample_scale * pixel_color);
@@ -108,12 +109,17 @@ class camera {
                         random_double_threadsafe() - 0.5, 0);
   }
 
-  color<double> ray_color(const ray& r, const hittable& world) const {
+  color<double> ray_color(const ray& r, int depth,
+                          const hittable& world) const {
+    if (depth <= 0) {
+      return color<double>(0.0, 0.0, 0.0);
+    }
+
     hit_record rec;
 
     if (world.hit(r, interval(0, infinity), rec)) {
       vec3<double> direction = random_on_hemisphere(rec.normal);
-      return 0.5 * ray_color(ray(rec.p, direction), world);
+      return 0.5 * ray_color(ray(rec.p, direction), depth - 1, world);
     }
 
     vec3<double> unit_direction = unit_vector(r.direction());
