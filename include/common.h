@@ -24,13 +24,7 @@ inline double degrees_to_radians(double degrees) {
   return degrees * pi / 180.0;
 }
 
-inline double random_double() { return std::rand() / (RAND_MAX + 1.0); }
-
-inline double random_double(double min, double max) {
-  return min + (max - min) * random_double();
-}
-
-inline double random_double_threadsafe() {
+inline double random_double() {
   thread_local std::mt19937_64 rng([] {
     std::random_device rd;
     auto seed = (uint64_t(rd()) << 32) ^ uint64_t(rd()) ^
@@ -41,8 +35,8 @@ inline double random_double_threadsafe() {
   return dist(rng);
 }
 
-inline double random_double_threadsafe(double min, double max) {
-  return min + (max - min) * random_double_threadsafe();
+inline double random_double(double min, double max) {
+  return min + (max - min) * random_double();
 }
 
 // Common Headers

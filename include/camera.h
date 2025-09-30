@@ -105,8 +105,7 @@ class camera {
   }
 
   vec3<double> sample_square() const {
-    return vec3<double>(random_double_threadsafe() - 0.5,
-                        random_double_threadsafe() - 0.5, 0);
+    return vec3<double>(random_double() - 0.5, random_double() - 0.5, 0);
   }
 
   color<double> ray_color(const ray& r, int depth,
@@ -117,7 +116,7 @@ class camera {
 
     hit_record rec;
 
-    if (world.hit(r, interval(0, infinity), rec)) {
+    if (world.hit(r, interval(0.001, infinity), rec)) {
       vec3<double> direction = random_on_hemisphere(rec.normal);
       return 0.5 * ray_color(ray(rec.p, direction), depth - 1, world);
     }
