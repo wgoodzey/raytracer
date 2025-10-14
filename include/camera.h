@@ -21,41 +21,41 @@ class camera {
 
     std::ofstream file("image.ppm", std::ios::binary);
 
-    const unsigned hw = std::thread::hardware_concurrency();
-    const unsigned num_threads = hw ? hw : 4;
-
-    auto worker = [&](int y0, int y1) {
-      for (int j = y0; j < y1; j++) {
-        for (int i = 0; i < image_width; i++) {
-          color<double> pixel_color(0.0, 0.0, 0.0);
-          for (int sample = 0; sample < samples_per_pixel; sample++) {
-            ray r = get_ray(i, j);
-            pixel_color += ray_color(r, max_depth, world);
-          }
-
-          raster[idx(i, j)] = color_out(pixel_sample_scale * pixel_color);
-        }
-      }
-    };
-
-    std::vector<std::thread> threads;
-    threads.reserve(num_threads);
-    int row_per_thread = (image_height + static_cast<int>(num_threads) - 1) /
-                         static_cast<int>(num_threads);
-
-    int y0 = 0;
-    for (unsigned t = 0; t < num_threads; ++t) {
-      int y1 = std::min(image_height, y0 + row_per_thread);
-      if (y0 >= y1) break;
-      threads.emplace_back(worker, y0, y1);
-      y0 = y1;
-    }
-
-    for (auto& th : threads) {
-      th.join();
-    }
-
     if (file.is_open()) {
+      const unsigned hw = std::thread::hardware_concurrency();
+      const unsigned num_threads = hw ? hw : 4;
+
+      auto worker = [&](int y0, int y1) {
+        for (int j = y0; j < y1; j++) {
+          for (int i = 0; i < image_width; i++) {
+            color<double> pixel_color(0.0, 0.0, 0.0);
+            for (int sample = 0; sample < samples_per_pixel; sample++) {
+              ray r = get_ray(i, j);
+              pixel_color += ray_color(r, max_depth, world);
+            }
+
+            raster[idx(i, j)] = color_out(pixel_sample_scale * pixel_color);
+          }
+        }
+      };
+
+      std::vector<std::thread> threads;
+      threads.reserve(num_threads);
+      int row_per_thread = (image_height + static_cast<int>(num_threads) - 1) /
+                           static_cast<int>(num_threads);
+
+      int y0 = 0;
+      for (unsigned t = 0; t < num_threads; ++t) {
+        int y1 = std::min(image_height, y0 + row_per_thread);
+        if (y0 >= y1) break;
+        threads.emplace_back(worker, y0, y1);
+        y0 = y1;
+      }
+
+      for (auto& th : threads) {
+        th.join();
+      }
+
       file << "P6\n" << image_width << " " << image_height << "\n255\n";
       file.write(reinterpret_cast<const char*>(raster.data()),
                  image_width * image_height * 3 * sizeof(char));
