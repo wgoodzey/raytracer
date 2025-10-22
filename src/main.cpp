@@ -30,6 +30,11 @@ int main(int argc, char* argv[]) {
   cam.samples_per_pixel = 100;
   cam.max_depth = 50;
 
+  cam.vfov = 20;
+  cam.lookfrom = point3<double>(-2.0, 2.0, 1.0);
+  cam.lookat   = point3<double>(0.0, 0.0, -1.0);
+  cam.vup      = vec3<double>(0.0, 1.0, 0.0);
+
   cam.render(world);
 
   return 0;
