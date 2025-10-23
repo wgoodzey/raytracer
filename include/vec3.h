@@ -117,6 +117,15 @@ inline vec3<T> unit_vector(const vec3<T>& v) {
   return v / v.length();
 }
 
+inline vec3<double> random_in_unit_disk() {
+  while (true) {
+    auto p = vec3<double>(random_double(-1, 1), random_double(-1, 1), 0);
+      if (p.length_squared() < 1) {
+        return p;
+    }
+  }
+}
+
 template <typename T>
 inline vec3<T> random_unit_vector() {
   while (true) {
