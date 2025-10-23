@@ -13,9 +13,9 @@ class camera {
   int max_depth         = 10;
 
   double         vfov     = 90;
-  point3<double> lookfrom = point3<double>(0.0, 0.0, 0.0);
-  point3<double> lookat   = point3<double>(0.0, 0.0, -1.0);
-  vec3<double>   vup      = vec3<double>(0.0, 1.0, 0.0);
+  point3       lookfrom = point3(0.0, 0.0, 0.0);
+  point3       lookat   = point3(0.0, 0.0, -1.0);
+  vec3<double> vup      = vec3<double>(0.0, 1.0, 0.0);
 
   double defocus_angle = 0;
   double focus_dist    = 0;
@@ -25,7 +25,7 @@ class camera {
   void render(const hittable& world) {
     initialize();
 
-    std::vector<color<uint8_t>> raster(image_height * image_width);
+    std::vector<color8> raster(image_height * image_width);
 
     std::ofstream file("image.ppm", std::ios::binary);
 
@@ -36,7 +36,7 @@ class camera {
       auto worker = [&](int y0, int y1) {
         for (int j = y0; j < y1; j++) {
           for (int i = 0; i < image_width; i++) {
-            color<double> pixel_color(0.0, 0.0, 0.0);
+            color pixel_color(0.0, 0.0, 0.0);
             for (int sample = 0; sample < samples_per_pixel; sample++) {
               ray r = get_ray(i, j);
               pixel_color += ray_color(r, max_depth, world);
@@ -71,15 +71,15 @@ class camera {
   }
 
  private:
-  int            image_height;
-  double         pixel_sample_scale;
-  point3<double> center;
-  point3<double> pixel00_loc;
-  vec3<double>   pixel_delta_u;
-  vec3<double>   pixel_delta_v;
-  vec3<double>   u, v, w;
-  vec3<double>   defocus_disk_u;
-  vec3<double>   defocus_disk_v;
+  int          image_height;
+  double       pixel_sample_scale;
+  point3       center;
+  point3       pixel00_loc;
+  vec3<double> pixel_delta_u;
+  vec3<double> pixel_delta_v;
+  vec3<double> u, v, w;
+  vec3<double> defocus_disk_u;
+  vec3<double> defocus_disk_v;
 
   void initialize() {
     image_height = int(image_width / aspect_ratio);
@@ -116,44 +116,46 @@ class camera {
 
   ray get_ray(int i, int j) const {
     auto offset = sample_square();
-    auto pixel_sample = pixel00_loc + ((i + offset.x()) * pixel_delta_u) +
-                        ((j + offset.y()) * pixel_delta_v);
+    auto pixel_sample = pixel00_loc 
+                      + ((i + offset.x()) * pixel_delta_u)
+                      + ((j + offset.y()) * pixel_delta_v);
 
     auto ray_origin = (defocus_angle <= 0) ? center : defocus_disk_sample();
     auto ray_direction = pixel_sample - ray_origin;
+    auto ray_time = random_double();
 
-    return ray(ray_origin, ray_direction);
+    return ray(ray_origin, ray_direction, ray_time);
   }
 
   vec3<double> sample_square() const {
     return vec3<double>(random_double() - 0.5, random_double() - 0.5, 0);
   }
 
-  point3<double> defocus_disk_sample() const {
+  point3 defocus_disk_sample() const {
     auto p = random_in_unit_disk();
     return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
   }
 
-  color<double> ray_color(const ray& r, int depth,
+  color ray_color(const ray& r, int depth,
                           const hittable& world) const {
     if (depth <= 0) {
-      return color<double>(0.0, 0.0, 0.0);
+      return color(0.0, 0.0, 0.0);
     }
 
     hit_record rec;
 
     if (world.hit(r, interval(0.001, infinity), rec)) {
       ray scattered;
-      color<double> attenuation;
+      color attenuation;
       if (rec.mat->scatter(r, rec, attenuation, scattered)) {
         return attenuation * ray_color(scattered, depth - 1, world);
       }
-      return color<double>(0.0, 0.0, 0.0);
+      return color(0.0, 0.0, 0.0);
     }
 
     vec3<double> unit_direction = unit_vector(r.direction());
     auto a = 0.5 * (unit_direction.y() + 1.0);
-    return (1.0 - a) * color<double>(1.0, 1.0, 1.0) +
-           a * color<double>(0.5, 0.7, 1.0);
+    return (1.0 - a) * color(1.0, 1.0, 1.0) +
+           a * color(0.5, 0.7, 1.0);
   }
 };
