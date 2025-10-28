@@ -6,18 +6,18 @@ class material {
  public:
   virtual ~material() = default;
 
-  virtual bool scatter(const ray &r_in, const hit_record &rec,
-                       color &attenuation, ray &scattered) const {
+  virtual bool scatter(const ray& r_in, const hit_record& rec,
+                       color& attenuation, ray& scattered) const {
     return false;
   }
 };
 
 class lambertian : public material {
  public:
-  lambertian(const color &albedo) : albedo(albedo) {}
+  lambertian(const color& albedo) : albedo(albedo) {}
 
-  bool scatter(const ray &r_in, const hit_record &rec,
-               color &attenuation, ray &scattered) const override {
+  bool scatter(const ray& r_in, const hit_record& rec,
+               color& attenuation, ray& scattered) const override {
     auto scatter_direction = rec.normal + random_unit_vector<double>();
 
     if (scatter_direction.near_zero()) {
@@ -35,7 +35,7 @@ class lambertian : public material {
 
 class metal : public material {
  public:
-  metal(const color &albedo, double fuzz)
+  metal(const color& albedo, double fuzz)
       : albedo(albedo), fuzz(fuzz < 1 ? fuzz : 1) {}
 
   bool scatter(const ray &r_in, const hit_record &rec,
@@ -56,8 +56,8 @@ class dielectric : public material {
  public:
   dielectric(double refraction_index) : refraction_index(refraction_index) {}
 
-  bool scatter(const ray &r_in, const hit_record &rec,
-               color &attenuation, ray &scattered) const override {
+  bool scatter(const ray& r_in, const hit_record& rec,
+               color& attenuation, ray& scattered) const override {
     attenuation = color(1.0, 1.0, 1.0);
 
     double ri = rec.front_face ? (1.0 / refraction_index) : refraction_index;
