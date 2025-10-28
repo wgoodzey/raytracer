@@ -26,12 +26,15 @@ class camera {
     initialize();
 
     std::vector<color8> raster(image_height * image_width);
+    std::atomic<int> rows_done = 0;
 
     std::ofstream file("image.ppm", std::ios::binary);
 
     if (file.is_open()) {
       const unsigned hw = std::thread::hardware_concurrency();
-      const unsigned num_threads = hw ? hw : 4;
+      const unsigned num_threads = hw ? hw : 1;
+
+      auto start_time = std::chrono::steady_clock::now();
 
       auto worker = [&](int y0, int y1) {
         for (int j = y0; j < y1; j++) {
@@ -44,6 +47,13 @@ class camera {
 
             raster[idx(i, j)] = color_out(pixel_sample_scale * pixel_color);
           }
+
+          int done = ++rows_done;
+            if (done % 10 == 0) {
+              double pct = 100.0 * done / image_height;
+              std::cout << "\rRendering: " << std::fixed << std::setprecision(1)
+                        << pct << "% completed" << std::flush;
+            }
         }
       };
 
@@ -64,9 +74,26 @@ class camera {
         th.join();
       }
 
+      auto end_time = std::chrono::steady_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+
       file << "P6\n" << image_width << " " << image_height << "\n255\n";
       file.write(reinterpret_cast<const char*>(raster.data()),
                  image_width * image_height * 3 * sizeof(char));
+
+      int hours = static_cast<int>(duration / 3600000);
+      duration %= 3600000;
+      int minutes = static_cast<int>(duration / 60000);
+      duration %= 60000;
+      int seconds = static_cast<int>(duration / 1000);
+      int milliseconds = static_cast<int>(duration % 1000);
+
+
+      std::cout << "\nDone in "
+                << std::setfill('0') << std::setw(2) << hours << ":"
+                << std::setw(2) << minutes << ":"
+                << std::setw(2) << seconds << ":"
+                << std::setw(3) << milliseconds << "\n";
     }
   }
 
