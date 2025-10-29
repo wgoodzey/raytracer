@@ -1,6 +1,8 @@
 #pragma once
 
 #include <fstream>
+#include <atomic>
+#include <iomanip>
 
 #include "hittable.h"
 #include "material.h"
