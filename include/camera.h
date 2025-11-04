@@ -1,8 +1,9 @@
 #pragma once
 
-#include <fstream>
 #include <atomic>
 #include <iomanip>
+#include <fstream>
+#include <thread>
 
 #include "hittable.h"
 #include "material.h"
@@ -24,13 +25,13 @@ class camera {
 
   int idx(int i, int j) const { return j * image_width + i; }
 
-  void render(const hittable& world) {
+  void render(const hittable& world, const char* filename) {
     initialize();
 
     std::vector<color8> raster(image_height * image_width);
     std::atomic<int> rows_done = 0;
 
-    std::ofstream file("image.ppm", std::ios::binary);
+    std::ofstream file(filename, std::ios::binary);
 
     if (file.is_open()) {
       const unsigned hw = std::thread::hardware_concurrency();
@@ -99,6 +100,10 @@ class camera {
     }
   }
 
+  void render(const hittable& world) {
+    render(world, "image.ppm");
+  }
+
  private:
   int          image_height;
   double       pixel_sample_scale;
@@ -111,6 +116,10 @@ class camera {
   vec3<double> defocus_disk_v;
 
   void initialize() {
+    if (focus_dist <= 0) {
+      focus_dist = (lookfrom - lookat).length();
+    }
+
     image_height = int(image_width / aspect_ratio);
     image_height = (image_height < 1) ? 1 : image_height;
 

@@ -7,17 +7,17 @@ Graphics (F2025).
 
 ### Build the project
 ```bash
-./build.sh
-```
-
-### Rebuild the project
-```bash
-./build.sh rebuild
+./raytracer.sh build
 ```
 
 ### Clean artifacts
 ```bash
-./build.sh clean
+./raytracer.sh clean
+```
+
+### Run raytracer
+```bash
+./raytracer.sh run
 ```
 
 ## Output Binaries
@@ -32,4 +32,5 @@ Only the binaries relevant to existing source files will be built.
 - `make`
 - `cmake`
 - `bash` to run this setup script
+- to use `./raytracer.sh convert`, `ffmpeg` is required
 

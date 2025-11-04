@@ -10,6 +10,17 @@
 #include "sphere.h"
 #include "texture.h"
 
+std::string timestamp() {
+  using namespace std::chrono;
+  auto now = system_clock::now();
+  auto t = system_clock::to_time_t(now);
+  std::tm tm = *std::localtime(&t);
+
+  std::ostringstream ss;
+  ss << std::put_time(&tm, "%Y%m%d_%H%M%S");
+  return ss.str();
+}
+
 void bouncing_spheres() {
   hittable_list world;
 
@@ -71,7 +82,7 @@ void bouncing_spheres() {
   cam.defocus_angle = 0.6;
   cam.focus_dist    = 10.0;
 
-  cam.render(world);
+  cam.render(world, ("output/motion-blur-" + timestamp() + ".ppm").c_str());
 }
 
 void checkered_spheres() {
@@ -99,13 +110,36 @@ void checkered_spheres() {
   cam.defocus_angle = 0.6;
   cam.focus_dist    = 10.0;
 
-  cam.render(world);
+  cam.render(world, ("output/checkered_spheres-" + timestamp() + ".ppm").c_str());
+}
+
+void earth() {
+  auto earth_texture = make_shared<image_texture>("assets/earthmap.jpg");
+  auto earth_surface = make_shared<lambertian>(earth_texture);
+  auto globe = make_shared<sphere>(point3(0.0, 0.0, 0.0), 2, earth_surface);
+
+  camera cam;
+
+  cam.aspect_ratio      = 16.0 / 9.0;
+  cam.image_width       = 400;
+  cam.samples_per_pixel = 100;
+  cam.max_depth         = 50;
+
+  cam.vfov     = 20;
+  cam.lookfrom = point3(0,0,12);
+  cam.lookat   = point3(0.0, 0.0, 0.0);
+  cam.vup      = vec3<double>(0.0, 1.0, 0.0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(hittable_list(globe), ("output/earth-" + timestamp() + ".ppm").c_str());
 }
 
 int main(int argc, char* argv[]) {
-  switch (2) {
-    case 1: bouncing_spheres(); break;
+  switch (3) {
+    case 1: bouncing_spheres();  break;
     case 2: checkered_spheres(); break;
+    case 3: earth();             break;
   }
   return 0;
 }

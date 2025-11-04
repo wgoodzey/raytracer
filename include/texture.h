@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "my_stb_image.h"
 
 class texture {
  public:
@@ -56,4 +57,27 @@ class checker_texture : public texture {
   double inv_scale;
   shared_ptr<texture> even;
   shared_ptr<texture> odd;
+};
+
+class image_texture : public texture {
+ public:
+  image_texture(const char* filename) : img(filename) {}
+
+  color value(double u, double v, const point3& p) const override {
+    if (img.height() <= 0) return color(0, 1, 1);
+
+    u = interval(0, 1).clamp(u);
+    v = 1.0 - interval(0, 1).clamp(v);
+
+    auto i = int(u * img.width());
+    auto j = int(v * img.height());
+    auto pixel = img.pixel_data(i, j);
+
+    auto color_scale = 1.0 / 255.0;
+    return color(color_scale * pixel[0], 
+                 color_scale * pixel[1], 
+                 color_scale * pixel[2]);
+  }
+ private:
+  image img;
 };
