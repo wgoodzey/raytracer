@@ -32,5 +32,5 @@ Only the binaries relevant to existing source files will be built.
 - `make`
 - `cmake`
 - `bash` to run this setup script
-- to use `./raytracer.sh convert`, `ffmpeg` is required
+- to use `./raytracer.sh convert`, [`ffmpeg`](https://git.ffmpeg.org/ffmpeg.git) is required
 
