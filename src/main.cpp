@@ -1,12 +1,10 @@
-#include <cstdint>
-#include <fstream>
-
 #include "bvh.h"
 #include "camera.h"
 #include "common.h"
 #include "hittable.h"
 #include "hittable_list.h"
 #include "material.h"
+#include "quad.h"
 #include "sphere.h"
 #include "texture.h"
 
@@ -18,7 +16,7 @@ std::string timestamp_ppm(std::string s) {
 
   std::ostringstream ss;
   ss << std::put_time(&tm, "%Y%m%d_%H%M%S");
-  return s + "-" + ss.str() + ".ppm";
+  return "output/" + s + "-" + ss.str() + ".ppm";
 }
 
 void bouncing_spheres() {
@@ -82,7 +80,7 @@ void bouncing_spheres() {
   cam.defocus_angle = 0.6;
   cam.focus_dist    = 10.0;
 
-  cam.render(world, timestamp_ppm("output/motion-blur"));
+  cam.render(world, timestamp_ppm("motion-blur"));
 }
 
 void checkered_spheres() {
@@ -110,7 +108,7 @@ void checkered_spheres() {
   cam.defocus_angle = 0.6;
   cam.focus_dist    = 10.0;
 
-  cam.render(world, timestamp_ppm("output/checkered_spheres"));
+  cam.render(world, timestamp_ppm("checkered_spheres"));
 }
 
 void earth() {
@@ -132,7 +130,7 @@ void earth() {
 
   cam.defocus_angle = 0;
 
-  cam.render(hittable_list(globe), timestamp_ppm("output/earth"));
+  cam.render(hittable_list(globe), timestamp_ppm("earth"));
 }
 
 void perlin_spheres() {
@@ -156,15 +154,48 @@ void perlin_spheres() {
 
   cam.defocus_angle = 0;
 
-  cam.render(world, timestamp_ppm("output/perlin-spheres"));
+  cam.render(world, timestamp_ppm("perlin-spheres"));
+}
+
+void quads() {
+  hittable_list world;
+
+  auto left_red     = make_shared<lambertian>(color(1.0, 0.2, 0.2));
+  auto back_green   = make_shared<lambertian>(color(0.2, 1.0, 0.2));
+  auto right_blue   = make_shared<lambertian>(color(0.2, 0.2, 1.0));
+  auto upper_orange = make_shared<lambertian>(color(1.0, 0.5, 0.0));
+  auto lower_teal   = make_shared<lambertian>(color(0.2, 0.8, 0.8));
+
+  world.add(make_shared<quad>(point3(-3,-2, 5), vec3<double>(0, 0,-4), vec3<double>(0, 4, 0), left_red));
+  world.add(make_shared<quad>(point3(-2,-2, 0), vec3<double>(4, 0, 0), vec3<double>(0, 4, 0), back_green));
+  world.add(make_shared<quad>(point3( 3,-2, 1), vec3<double>(0, 0, 4), vec3<double>(0, 4, 0), right_blue));
+  world.add(make_shared<quad>(point3(-2, 3, 1), vec3<double>(4, 0, 0), vec3<double>(0, 0, 4), upper_orange));
+  world.add(make_shared<quad>(point3(-2,-3, 5), vec3<double>(4, 0, 0), vec3<double>(0, 0,-4), lower_teal));
+
+  camera cam;
+
+  cam.aspect_ratio      = 1.0;
+  cam.image_width       = 400;
+  cam.samples_per_pixel = 100;
+  cam.max_depth         = 50;
+
+  cam.vfov     = 80;
+  cam.lookfrom = point3(0.0, 0.0, 9.0);
+  cam.lookat   = point3(0.0, 0.0, 0.0);
+  cam.vup      = vec3<double>(0.0, 1.0, 0.0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world, timestamp_ppm("quads"));
 }
 
 int main(int argc, char* argv[]) {
-  switch (4) {
+  switch (5) {
     case 1: bouncing_spheres();  break;
     case 2: checkered_spheres(); break;
     case 3: earth();             break;
     case 4: perlin_spheres();    break;
+    case 5: quads();             break;
   }
   return 0;
 }
