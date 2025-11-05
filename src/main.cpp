@@ -71,6 +71,7 @@ void bouncing_spheres() {
   cam.image_width       = 400;
   cam.samples_per_pixel = 100;
   cam.max_depth         = 50;
+  cam.background        = color(0.70, 0.80, 1.00);
 
   cam.vfov     = 20;
   cam.lookfrom = point3(13.0, 2.0, 3.0);
@@ -99,6 +100,7 @@ void checkered_spheres() {
   cam.image_width       = 400;
   cam.samples_per_pixel = 100;
   cam.max_depth         = 50;
+  cam.background        = color(0.70, 0.80, 1.00);
 
   cam.vfov     = 20;
   cam.lookfrom = point3(13.0, 2.0, 3.0);
@@ -108,7 +110,7 @@ void checkered_spheres() {
   cam.defocus_angle = 0.6;
   cam.focus_dist    = 10.0;
 
-  cam.render(world, timestamp_ppm("checkered_spheres"));
+  cam.render(world, timestamp_ppm("checkered-spheres"));
 }
 
 void earth() {
@@ -122,6 +124,7 @@ void earth() {
   cam.image_width       = 400;
   cam.samples_per_pixel = 100;
   cam.max_depth         = 50;
+  cam.background        = color(0.70, 0.80, 1.00);
 
   cam.vfov     = 20;
   cam.lookfrom = point3(0,0,12);
@@ -146,11 +149,13 @@ void perlin_spheres() {
   cam.image_width = 400;
   cam.samples_per_pixel = 100;
   cam.max_depth = 50;
+  cam.background        = color(0.70, 0.80, 1.00);
 
   cam.vfov     = 20;
   cam.lookfrom = point3(13.0 , 2.0, 3.0);
   cam.lookat   = point3(0.0, 0.0, 0.0);
   cam.vup      = vec3<double>(0.0, 1.0, 0.0);
+  cam.background        = color(0.70, 0.80, 1.00);
 
   cam.defocus_angle = 0;
 
@@ -166,11 +171,11 @@ void quads() {
   auto upper_orange = make_shared<lambertian>(color(1.0, 0.5, 0.0));
   auto lower_teal   = make_shared<lambertian>(color(0.2, 0.8, 0.8));
 
-  world.add(make_shared<quad>(point3(-3,-2, 5), vec3<double>(0, 0,-4), vec3<double>(0, 4, 0), left_red));
-  world.add(make_shared<quad>(point3(-2,-2, 0), vec3<double>(4, 0, 0), vec3<double>(0, 4, 0), back_green));
-  world.add(make_shared<quad>(point3( 3,-2, 1), vec3<double>(0, 0, 4), vec3<double>(0, 4, 0), right_blue));
-  world.add(make_shared<quad>(point3(-2, 3, 1), vec3<double>(4, 0, 0), vec3<double>(0, 0, 4), upper_orange));
-  world.add(make_shared<quad>(point3(-2,-3, 5), vec3<double>(4, 0, 0), vec3<double>(0, 0,-4), lower_teal));
+  world.add(make_shared<quad>(point3(-3.0, -2.0, 5.0), vec3<double>(0.0, 0.0, -4.0), vec3<double>(0.0, 4.0, 0.0), left_red));
+  world.add(make_shared<quad>(point3(-2.0, -2.0, 0.0), vec3<double>(4.0, 0.0, 0.0), vec3<double>(0.0, 4.0, 0.0), back_green));
+  world.add(make_shared<quad>(point3( 3.0, -2.0, 1.0), vec3<double>(0.0, 0.0, 4.0), vec3<double>(0.0, 4.0, 0.0), right_blue));
+  world.add(make_shared<quad>(point3(-2.0,  3.0, 1.0), vec3<double>(4.0, 0.0, 0.0), vec3<double>(0.0, 0.0, 4.0), upper_orange));
+  world.add(make_shared<quad>(point3(-2.0, -3.0, 5.0), vec3<double>(4.0, 0.0, 0.0), vec3<double>(0.0, 0.0,-4.0), lower_teal));
 
   camera cam;
 
@@ -178,6 +183,7 @@ void quads() {
   cam.image_width       = 400;
   cam.samples_per_pixel = 100;
   cam.max_depth         = 50;
+  cam.background        = color(0.70, 0.80, 1.00);
 
   cam.vfov     = 80;
   cam.lookfrom = point3(0.0, 0.0, 9.0);
@@ -189,13 +195,50 @@ void quads() {
   cam.render(world, timestamp_ppm("quads"));
 }
 
+void simple_light() {
+  hittable_list world;
+
+  auto pertext = make_shared<noise_texture>(4);
+  world.add(make_shared<sphere>(point3(0.0, -1000.0, 0.0), 1000, make_shared<lambertian>(pertext)));
+  world.add(make_shared<sphere>(point3(0.0, 2.0, 0.0), 2, make_shared<lambertian>(pertext)));
+
+  auto difflight = make_shared<diffuse_light>(color(4.0, 4.0, 4.0));
+  world.add(make_shared<sphere>(point3(0.0, 7.0, 0.0), 2, difflight));
+  world.add(make_shared<quad>(point3(3.0, 1.0, -2.0), vec3<double>(2.0, 0.0, 0.0), vec3<double>(0.0, 2.0, 0.0), difflight));
+
+  camera cam;
+
+  cam.aspect_ratio      = 16.0 / 9.0;
+  cam.image_width       = 400;
+  cam.samples_per_pixel = 100;
+  cam.max_depth         = 50;
+  cam.background        = color(0,0,0);
+
+  cam.vfov     = 20;
+  cam.lookfrom = point3(26,3,6);
+  cam.lookat   = point3(0,2,0);
+  cam.vup      = vec3<double>(0,1,0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world, timestamp_ppm("simple-light"));
+}
+
 int main(int argc, char* argv[]) {
-  switch (5) {
+
+  int number = 6;
+
+  if (argc > 1)
+    number = std::atoi(argv[1]);
+
+  switch (number) {
     case 1: bouncing_spheres();  break;
     case 2: checkered_spheres(); break;
     case 3: earth();             break;
     case 4: perlin_spheres();    break;
     case 5: quads();             break;
+    case 6: simple_light();      break;
+    default:                     break;
   }
   return 0;
 }
