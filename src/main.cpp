@@ -10,7 +10,7 @@
 #include "sphere.h"
 #include "texture.h"
 
-std::string timestamp() {
+std::string timestamp_ppm(std::string s) {
   using namespace std::chrono;
   auto now = system_clock::now();
   auto t = system_clock::to_time_t(now);
@@ -18,7 +18,7 @@ std::string timestamp() {
 
   std::ostringstream ss;
   ss << std::put_time(&tm, "%Y%m%d_%H%M%S");
-  return ss.str();
+  return s + "-" + ss.str() + ".ppm";
 }
 
 void bouncing_spheres() {
@@ -82,7 +82,7 @@ void bouncing_spheres() {
   cam.defocus_angle = 0.6;
   cam.focus_dist    = 10.0;
 
-  cam.render(world, ("output/motion-blur-" + timestamp() + ".ppm").c_str());
+  cam.render(world, timestamp_ppm("output/motion-blur"));
 }
 
 void checkered_spheres() {
@@ -110,7 +110,7 @@ void checkered_spheres() {
   cam.defocus_angle = 0.6;
   cam.focus_dist    = 10.0;
 
-  cam.render(world, ("output/checkered_spheres-" + timestamp() + ".ppm").c_str());
+  cam.render(world, timestamp_ppm("output/checkered_spheres"));
 }
 
 void earth() {
@@ -132,14 +132,39 @@ void earth() {
 
   cam.defocus_angle = 0;
 
-  cam.render(hittable_list(globe), ("output/earth-" + timestamp() + ".ppm").c_str());
+  cam.render(hittable_list(globe), timestamp_ppm("output/earth"));
+}
+
+void perlin_spheres() {
+  hittable_list world;
+
+  auto pertext = make_shared<noise_texture>();
+  world.add(make_shared<sphere>(point3(0.0, -1000.0, 0.0), 1000, make_shared<lambertian>(pertext)));
+  world.add(make_shared<sphere>(point3(0.0, 2.0, 0.0), 2, make_shared<lambertian>(pertext)));
+
+  camera cam;
+
+  cam.aspect_ratio = 16.0 / 9.0;
+  cam.image_width = 400;
+  cam.samples_per_pixel = 100;
+  cam.max_depth = 50;
+
+  cam.vfov     = 20;
+  cam.lookfrom = point3(13.0 , 2.0, 3.0);
+  cam.lookat   = point3(0.0, 0.0, 0.0);
+  cam.vup      = vec3<double>(0.0, 1.0, 0.0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world, timestamp_ppm("output/perlin-spheres"));
 }
 
 int main(int argc, char* argv[]) {
-  switch (3) {
+  switch (4) {
     case 1: bouncing_spheres();  break;
     case 2: checkered_spheres(); break;
     case 3: earth();             break;
+    case 4: perlin_spheres();    break;
   }
   return 0;
 }

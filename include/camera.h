@@ -25,7 +25,7 @@ class camera {
 
   int idx(int i, int j) const { return j * image_width + i; }
 
-  void render(const hittable& world, const char* filename) {
+  void render(const hittable& world, std::string filename) {
     initialize();
 
     std::vector<color8> raster(image_height * image_width);
@@ -98,6 +98,8 @@ class camera {
                 << std::setw(2) << seconds << ":"
                 << std::setw(3) << milliseconds << "\n";
     }
+
+    std::cout << "Render path: " << filename << std::endl;
   }
 
   void render(const hittable& world) {
