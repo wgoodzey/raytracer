@@ -24,7 +24,7 @@ std::string timestamp_ppm(std::string s) {
 void bouncing_spheres() {
   hittable_list world;
 
-  auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));;
+  auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
   world.add(make_shared<sphere>(point3(0.0, -1000.0, 0.0), 1000.0, ground_material));
 
   for (int a = -11; a < 11; a++) {
@@ -52,8 +52,7 @@ void bouncing_spheres() {
           sphere_material = make_shared<dielectric>(1.5);
           world.add(make_shared<sphere>(center, 0.2, sphere_material));
         }
-      }
-    }
+      } }
   }
 
   auto material1 = make_shared<dielectric>(1.5);
@@ -419,6 +418,116 @@ void triangles() {
   cam.render(world, timestamp_ppm("triangles"));
 }
 
+void showcase_scene() {
+  hittable_list world;
+
+  // Ground
+  auto ground = make_shared<metal>(color(0.9, 0.9, 0.9), 0.2);
+  world.add(make_shared<quad>(point3(-20,-5,-20), vec3<double>(40,0,0), vec3<double>(0,0,40), ground));
+
+  // Back wall
+  auto perlin_tex = make_shared<noise_texture>(2.0);
+  auto back_wall = make_shared<lambertian>(perlin_tex);
+  world.add(make_shared<quad>(point3(-20,-5,-20), vec3<double>(40,0,0), vec3<double>(0,25,0), back_wall));
+
+  // Left wall
+  auto checker = make_shared<checker_texture>(1.0, color(0.1, 0.1, 0.1), color(0.8, 0.8, 0.8));
+  auto left_wall = make_shared<lambertian>(checker);
+  world.add(make_shared<quad>(point3(-20,-5,-20), vec3<double>(0,0,40), vec3<double>(0,25,0), left_wall));
+
+  // Right wall
+  auto right_wall = make_shared<lambertian>(checker);
+  world.add(make_shared<quad>(point3(20,-5,-20), vec3<double>(0,0,40), vec3<double>(0,25,0), right_wall));
+
+  // Ceiling
+  auto ceiling = make_shared<lambertian>(color(0.3, 0.3, 0.3));
+  world.add(make_shared<quad>(point3(-20,20,-20), vec3<double>(40,0,0), vec3<double>(0,0,40), ceiling));
+
+  // Rear wall
+  auto rear_wall = make_shared<lambertian>(checker);
+  world.add(make_shared<quad>(point3(-20,-5,20), vec3<double>(40,0,0), vec3<double>(0,25,0), rear_wall));
+
+  // Vertical emissive bars
+  auto cool_bar = make_shared<diffuse_light>(color(0.6, 0.8, 1.2));
+  world.add(make_shared<quad>(point3(-15,-2,14), vec3<double>(6,0,0), vec3<double>(0,18,0), cool_bar));
+
+  auto neutral_bar = make_shared<diffuse_light>(color(1.0, 0.9, 0.8));
+  world.add(make_shared<quad>(point3(-3,-2,14), vec3<double>(6,0,0), vec3<double>(0,18,0), neutral_bar));
+
+  auto warm_bar = make_shared<diffuse_light>(color(1.6, 1.1, 0.5));
+  world.add(make_shared<quad>(point3(9,-2,14), vec3<double>(6,0,0), vec3<double>(0,18,0), warm_bar));
+
+  // 3x3 grid of spheres
+  double sphere_radius = 3;
+  double grid_spacing = 6.5;
+  double depth = -6;
+
+  // Bottom row
+  auto red_mat = make_shared<lambertian>(color(0.9, 0.2, 0.2));
+  auto blue_mat = make_shared<lambertian>(color(0.2, 0.3, 0.9));
+  auto green_mat = make_shared<lambertian>(color(0.2, 0.8, 0.3));
+
+  world.add(make_shared<sphere>(point3(0, 7.5 - grid_spacing, depth), sphere_radius, red_mat));
+  world.add(make_shared<sphere>(point3(grid_spacing, 7.5 - grid_spacing, depth), sphere_radius, blue_mat));
+  world.add(make_shared<sphere>(point3(2*grid_spacing, 7.5 - grid_spacing, depth), sphere_radius, green_mat));
+
+  // Middle row
+  auto glass = make_shared<dielectric>(1.5);
+  auto shiny_metal = make_shared<metal>(color(1.0, 0.85, 0.5), 0.1);
+  auto rough_metal = make_shared<metal>(color(0.7, 0.7, 0.8), 0.6);
+
+  world.add(make_shared<sphere>(point3(0, 7.5, depth), sphere_radius, shiny_metal));
+  world.add(make_shared<sphere>(point3(grid_spacing, 7.5, depth), sphere_radius, rough_metal));
+  world.add(make_shared<sphere>(point3(2*grid_spacing, 7.5, depth), sphere_radius, glass));
+  
+  // Top row
+  // First smoky volume
+  auto smoky_boundary = make_shared<sphere>(point3(0, 7.5 + grid_spacing, depth), sphere_radius, make_shared<dielectric>(1.5));
+  world.add(smoky_boundary);
+  world.add(make_shared<constant_medium>(smoky_boundary, 0.15, color(0.9, 0.9, 0.9)));
+
+  // Earth texture sphere
+  auto earth_mat = make_shared<lambertian>(make_shared<image_texture>("assets/earthmap.jpg"));
+  world.add(make_shared<sphere>(point3(grid_spacing, 7.5 + grid_spacing, depth), sphere_radius, earth_mat));
+
+  auto smoky_vol = make_shared<sphere>(point3(2*grid_spacing, 7.5 + grid_spacing, depth), sphere_radius, make_shared<lambertian>(color(0, 0, 0)));
+  world.add(make_shared<constant_medium>(smoky_vol, 0.15, color(0.9, 0.9, 0.9)));
+
+  // Rotated volume
+  hittable_list boxes;
+  auto box_mat = make_shared<lambertian>(color(0.75, 0.75, 0.2));
+  int num_boxes = 800;
+  for (int i = 0; i < num_boxes; i++) {
+    auto size = random_double(0.3, 1.2);
+    auto pos = point3::random(-8, 8);
+    boxes.add(make_shared<sphere>(pos, size, box_mat));
+  }
+  world.add(make_shared<translate>(
+    make_shared<rotate_y>(
+      make_shared<bvh_node>(boxes), 60),
+      vec3<double>(-15, 0, -8)
+  ));
+
+  world = hittable_list(make_shared<bvh_node>(world));
+
+  camera cam;
+
+  cam.aspect_ratio      = 4.0 / 3.0;
+  cam.image_width       = 800; // 4000;
+  cam.samples_per_pixel = 1000;
+  cam.max_depth         = 4;
+  cam.background        = color(0.1, 0.1, 0.15);
+
+  cam.vfov     = 70;
+  cam.lookfrom = point3(8, 12, 15);
+  cam.lookat   = point3(0, 7.5, depth);
+  cam.vup      = vec3<double>(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world, timestamp_ppm("showcase"));
+}
+
 int main(int argc, char* argv[]) {
 
   int number = -1;
@@ -437,7 +546,8 @@ int main(int argc, char* argv[]) {
     case 8:  cornell_smoke();             break;
     case 9:  final_scene(800, 10000, 40); break;
     case 10: final_scene(400, 250, 4);    break;
-    default: triangles();                 break;
+    case 11: triangles();                 break;
+    default: showcase_scene();            break;
   }
   return 0;
 }

@@ -25,10 +25,8 @@ usage() {
 Usage:
   ./raytracer.sh build          [cmake-args...]
                  run            [program-args...]
-                 open
-                 convert <file.ppm>
+                 convert <file>
                  clean
-                 clean-outputs
                  help
 EOF
 }
@@ -59,43 +57,24 @@ case "${cmd}" in
       cmake --build "${BUILD_DIR}" -- -j"$(cpu_count)"
     fi
     echo "Running ${BIN} $*"
-    "${BIN}" "$@"
-    ;;
-
-  open)
-    file="$(latest_render)"
-    if [[ -z "${file}" ]]; then
-      echo "No .ppm files found in ${RENDERS_DIR}" >&2
-      exit 1
-    fi
-    opener="$(detect_open)"
-    if [[ -z "${opener}" ]]; then
-      echo "Open this file manually: ${file}"
-    else
-      # shellcheck disable=SC2086
-      ${opener} "${file}"
-    fi
+    systemd-inhibit --what=sleep:shutdown:idle --why="Cpu render" -- "${BIN}" "$@"
     ;;
 
   convert)
     target="${1:-}"
     if [[ -z "${target}" ]]; then
-      echo "Usage: ./raytracer.sh convert <file.ppm>" >&2
+      echo "Usage: ./raytracer.sh convert <file>" >&2
       exit 1
     fi
     if [[ ! -f "${target}" ]]; then
       echo "File not found: ${target}" >&2
       exit 2
     fi
-    if [[ "${target##*.}" != "ppm" ]]; then
-      echo "File must have .ppm extension" >&2
-      exit 3
-    fi
     if ! command -v ffmpeg >/dev/null 2>&1; then
       echo "Error: ffmpeg not found. Please install it to use convert." >&2
-      exit 4
+      exit 3
     fi
-    out="${target%.ppm}.png"
+    out="${target%.*}.png"
     echo "Converting ${target} -> ${out}"
     ffmpeg -y -loglevel error -i "${target}" "${out}"
     echo "Wrote: ${out}"
@@ -104,11 +83,21 @@ case "${cmd}" in
   clean)
     rm -rf "${BUILD_DIR}"
     echo "Removed ${BUILD_DIR}/"
-    ;;
-
-  clean-outputs|clean-renders)
     rm -rf "${RENDERS_DIR}"
     echo "Removed ${RENDERS_DIR}/"
+    ;;
+
+  testing)
+    rm -rf "${RENDERS_DIR}"
+    echo "Removed ${RENDERS_DIR}/"
+
+    ensure_dirs
+    cmake -S . -B "${BUILD_DIR}" -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
+    cmake --build "${BUILD_DIR}" -- -j"$(cpu_count)"
+       
+    echo "Running ${BIN} $*"
+    systemd-inhibit --what=sleep:shutdown:idle --why="Cpu render" -- "${BIN}" "$@"
+    open output/*
     ;;
 
   help|-h|--help)
