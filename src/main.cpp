@@ -10,7 +10,10 @@
 #include "texture.h"
 #include "triangle.h"
 
-std::string timestamp_ppm(std::string s) {
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
+std::string timestamp(std::string s) {
   using namespace std::chrono;
   auto now = system_clock::now();
   auto t = system_clock::to_time_t(now);
@@ -18,7 +21,7 @@ std::string timestamp_ppm(std::string s) {
 
   std::ostringstream ss;
   ss << std::put_time(&tm, "%Y%m%d_%H%M%S");
-  return "output/" + s + "-" + ss.str() + ".ppm";
+  return "output/" + s + "-" + ss.str() + ".hdr";
 }
 
 void bouncing_spheres() {
@@ -82,7 +85,7 @@ void bouncing_spheres() {
   cam.defocus_angle = 0.6;
   cam.focus_dist    = 10.0;
 
-  cam.render(world, timestamp_ppm("motion-blur"));
+  cam.render(world, timestamp("motion-blur"));
 }
 
 void checkered_spheres() {
@@ -111,7 +114,7 @@ void checkered_spheres() {
   cam.defocus_angle = 0.6;
   cam.focus_dist    = 10.0;
 
-  cam.render(world, timestamp_ppm("checkered-spheres"));
+  cam.render(world, timestamp("checkered-spheres"));
 }
 
 void earth() {
@@ -134,7 +137,7 @@ void earth() {
 
   cam.defocus_angle = 0;
 
-  cam.render(hittable_list(globe), timestamp_ppm("earth"));
+  cam.render(hittable_list(globe), timestamp("earth"));
 }
 
 void perlin_spheres() {
@@ -160,7 +163,7 @@ void perlin_spheres() {
 
   cam.defocus_angle = 0;
 
-  cam.render(world, timestamp_ppm("perlin-spheres"));
+  cam.render(world, timestamp("perlin-spheres"));
 }
 
 void quads() {
@@ -193,7 +196,7 @@ void quads() {
 
   cam.defocus_angle = 0;
 
-  cam.render(world, timestamp_ppm("quads"));
+  cam.render(world, timestamp("quads"));
 }
 
 void simple_light() {
@@ -222,7 +225,7 @@ void simple_light() {
 
   cam.defocus_angle = 0;
 
-  cam.render(world, timestamp_ppm("simple-light"));
+  cam.render(world, timestamp("simple-light"));
 }
 
 void cornell_box() {
@@ -266,7 +269,7 @@ void cornell_box() {
 
   cam.defocus_angle = 0;
 
-  cam.render(world, timestamp_ppm("cornell-box"));
+  cam.render(world, timestamp("cornell-box"));
 }
 
 void cornell_smoke() {
@@ -310,7 +313,7 @@ void cornell_smoke() {
 
   cam.defocus_angle = 0;
 
-  cam.render(world, timestamp_ppm("cornel-smoke"));
+  cam.render(world, timestamp("cornel-smoke"));
 }
 
 void final_scene(int image_width, int samples_per_pixel, int max_depth) {
@@ -389,7 +392,7 @@ void final_scene(int image_width, int samples_per_pixel, int max_depth) {
 
   cam.defocus_angle = 0;
 
-  cam.render(world, timestamp_ppm("final-scene"));
+  cam.render(world, timestamp("final-scene"));
 }
 
 void triangles() {
@@ -415,7 +418,7 @@ void triangles() {
   cam.defocus_angle = 0.6;
   cam.focus_dist    = 10.0;
 
-  cam.render(world, timestamp_ppm("triangles"));
+  cam.render(world, timestamp("triangles"));
 }
 
 void showcase_scene() {
@@ -525,7 +528,7 @@ void showcase_scene() {
 
   cam.defocus_angle = 0;
 
-  cam.render(world, timestamp_ppm("showcase"));
+  cam.render(world, timestamp("showcase"));
 }
 
 int main(int argc, char* argv[]) {

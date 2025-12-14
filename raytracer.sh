@@ -36,6 +36,7 @@ ensure_dirs() {
 }
 
 latest_render() {
+  ls -t "${RENDERS_DIR}"/*.hdr 2>/dev/null | head -n 1 || \
   ls -t "${RENDERS_DIR}"/*.ppm 2>/dev/null | head -n 1 || true
 }
 
@@ -74,7 +75,7 @@ case "${cmd}" in
       echo "Error: ffmpeg not found. Please install it to use convert." >&2
       exit 3
     fi
-    out="${target%.*}.png"
+    out="${target%.hdr}.jpg"
     echo "Converting ${target} -> ${out}"
     ffmpeg -y -loglevel error -i "${target}" "${out}"
     echo "Wrote: ${out}"
@@ -97,7 +98,17 @@ case "${cmd}" in
        
     echo "Running ${BIN} $*"
     systemd-inhibit --what=sleep:shutdown:idle --why="Cpu render" -- "${BIN}" "$@"
-    open output/*
+
+    target="$(latest_render)"
+    if [[ -z "${target}" ]]; then
+      echo "No render found in ${RENDERS_DIR}/" >&2
+      exit 4
+    fi
+    out="${target%.*}.jpg"
+    echo "Converting ${target} -> ${out}"
+    ffmpeg -y -loglevel error -i "${target}" "${out}"
+
+    open "${out}" || echo "Output at: ${out}"
     ;;
 
   help|-h|--help)

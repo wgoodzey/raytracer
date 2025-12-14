@@ -1,9 +1,16 @@
 #pragma once
 
+#include <algorithm>
 #include <atomic>
+#include <chrono>
+#include <cmath>
 #include <iomanip>
-#include <fstream>
+#include <iostream>
+#include <string>
 #include <thread>
+#include <vector>
+
+#include "stb_image_write.h"
 
 #include "hittable.h"
 #include "material.h"
@@ -29,82 +36,91 @@ class camera {
   void render(const hittable& world, std::string filename) {
     initialize();
 
-    std::vector<color8> raster(image_height * image_width);
+    std::vector<float> raster(image_height * image_width * 3);
     std::atomic<int> rows_done = 0;
+    const unsigned hw = std::thread::hardware_concurrency();
+    const unsigned num_threads = hw ? hw : 1;
 
-    std::ofstream file(filename, std::ios::binary);
+    auto start_time = std::chrono::steady_clock::now();
 
-    if (file.is_open()) {
-      const unsigned hw = std::thread::hardware_concurrency();
-      const unsigned num_threads = hw ? hw : 1;
-
-      auto start_time = std::chrono::steady_clock::now();
-
-      auto worker = [&](int y0, int y1) {
-        for (int j = y0; j < y1; ++j) {
-          for (int i = 0; i < image_width; ++i) {
-            color pixel_color(0.0, 0.0, 0.0);
-            for (int s_j = 0; s_j < sqrt_spp; ++s_j) {
-              for (int s_i = 0; s_i < sqrt_spp; ++s_i) {
-                ray r = get_ray(i, j, s_i, s_j);
-                pixel_color += ray_color(r, max_depth, world);
-              }
+    auto worker = [&](int y0, int y1) {
+      for (int j = y0; j < y1; ++j) {
+        for (int i = 0; i < image_width; ++i) {
+          color pixel_color(0.0, 0.0, 0.0);
+          for (int s_j = 0; s_j < sqrt_spp; ++s_j) {
+            for (int s_i = 0; s_i < sqrt_spp; ++s_i) {
+              ray r = get_ray(i, j, s_i, s_j);
+              pixel_color += ray_color(r, max_depth, world);
             }
-            raster[idx(i, j)] = color_out(pixel_sample_scale * pixel_color);
           }
-          int done = ++rows_done;
-          if (done % 10 == 0) {
-            double pct = 100.0 * done / image_height;
-            std::cout << "\rRendering: " << std::fixed << std::setprecision(1)
-                      << pct << "% completed" << std::flush;
-          }
+
+          const color sample_color = pixel_sample_scale * pixel_color;
+
+          const int base = 3 * idx(i, j);
+          raster[base + 0] = linear_to_gama(std::max(0.0, sample_color.x()));
+          raster[base + 1] = linear_to_gama(std::max(0.0, sample_color.y()));
+          raster[base + 2] = linear_to_gama(std::max(0.0, sample_color.z()));
         }
-      };
-
-      std::vector<std::thread> threads;
-      threads.reserve(num_threads);
-      int row_per_thread = (image_height + static_cast<int>(num_threads) - 1) /
-                           static_cast<int>(num_threads);
-
-      int y0 = 0;
-      for (unsigned t = 0; t < num_threads; ++t) {
-        int y1 = std::min(image_height, y0 + row_per_thread);
-        if (y0 >= y1) break;
-        threads.emplace_back(worker, y0, y1);
-        y0 = y1;
+        int done = ++rows_done;
+        if (done % 10 == 0) {
+          double pct = 100.0 * done / image_height;
+          std::cout << "\rRendering: " << std::fixed << std::setprecision(1)
+                    << pct << "% completed" << std::flush;
+        }
       }
+    };
 
-      for (auto& th : threads) {
-        th.join();
-      }
+    std::vector<std::thread> threads;
+    threads.reserve(num_threads);
+    int row_per_thread = (image_height + static_cast<int>(num_threads) - 1) /
+                         static_cast<int>(num_threads);
 
-      auto end_time = std::chrono::steady_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
-
-      file << "P6\n" << image_width << " " << image_height << "\n255\n";
-      file.write(reinterpret_cast<const char*>(raster.data()),
-                 image_width * image_height * 3 * sizeof(char));
-
-      int hours = static_cast<int>(duration / 3600000);
-      duration %= 3600000;
-      int minutes = static_cast<int>(duration / 60000);
-      duration %= 60000;
-      int seconds = static_cast<int>(duration / 1000);
-      int milliseconds = static_cast<int>(duration % 1000);
-
-
-      std::cout << "\nDone in "
-                << std::setfill('0') << std::setw(2) << hours << ":"
-                << std::setw(2) << minutes << ":"
-                << std::setw(2) << seconds << ":"
-                << std::setw(3) << milliseconds << "\n";
+    int y0 = 0;
+    for (unsigned t = 0; t < num_threads; ++t) {
+      int y1 = std::min(image_height, y0 + row_per_thread);
+      if (y0 >= y1) break;
+      threads.emplace_back(worker, y0, y1);
+      y0 = y1;
     }
+
+    for (auto& th : threads) {
+      th.join();
+    }
+
+    auto end_time = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
+
+    const int write_result = stbi_write_hdr(
+      filename.c_str(),
+      image_width,
+      image_height,
+      3,
+      raster.data()
+    );
+
+    if (write_result == 0) {
+      std::cerr << "\nERROR: Failed to write HDR image: " << filename << "\n";
+    }
+
+    int hours = static_cast<int>(duration / 3600000);
+    duration %= 3600000;
+    int minutes = static_cast<int>(duration / 60000);
+    duration %= 60000;
+    int seconds = static_cast<int>(duration / 1000);
+    int milliseconds = static_cast<int>(duration % 1000);
+
+
+    std::cout << "\nDone in "
+              << std::setfill('0') << std::setw(2) << hours << ":"
+              << std::setw(2) << minutes << ":"
+              << std::setw(2) << seconds << ":"
+              << std::setw(3) << milliseconds << "\n";
 
     std::cout << "Render path: " << filename << std::endl;
   }
 
   void render(const hittable& world) {
-    render(world, "image.ppm");
+    render(world, "image.hdr");
   }
 
  private:
