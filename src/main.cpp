@@ -71,11 +71,12 @@ void bouncing_spheres() {
 
   camera cam;
 
-  cam.aspect_ratio      = 16.0 / 9.0;
-  cam.image_width       = 400;
+  // cam.aspect_ratio      = 16.0 / 9.0;
+  cam.aspect_ratio      = 4.0 / 3.0;
+  cam.image_width       = 800;
   cam.samples_per_pixel = 100;
   cam.max_depth         = 50;
-  cam.background        = color(0.70, 0.80, 1.00);
+  cam.background        = color(0, 0, 0);
 
   cam.vfov     = 20;
   cam.lookfrom = point3(13.0, 2.0, 3.0);
@@ -212,8 +213,9 @@ void simple_light() {
 
   camera cam;
 
-  cam.aspect_ratio      = 16.0 / 9.0;
-  cam.image_width       = 400;
+  // cam.aspect_ratio      = 16.0 / 9.0;
+  cam.aspect_ratio      = 4.0 / 3.0;
+  cam.image_width       = 800;
   cam.samples_per_pixel = 100;
   cam.max_depth         = 50;
   cam.background        = color(0,0,0);
@@ -301,8 +303,8 @@ void cornell_smoke() {
   camera cam;
 
   cam.aspect_ratio      = 1.0;
-  cam.image_width       = 600;
-  cam.samples_per_pixel = 200;
+  cam.image_width       = 800;
+  cam.samples_per_pixel = 400;
   cam.max_depth         = 50;
   cam.background        = color(0,0,0);
 
@@ -398,25 +400,60 @@ void final_scene(int image_width, int samples_per_pixel, int max_depth) {
 void triangles() {
   hittable_list world;
 
-  auto red = make_shared<lambertian>(color(.65, .05, .05));
+  auto red    = make_shared<lambertian>(color(.65, .05, .05));
+  auto blue   = make_shared<lambertian>(color(.05, .05, .65));
+  auto green  = make_shared<lambertian>(color(.05, .65, .05));
 
-  world.add(make_shared<triag>(point3(0.5,0,0), vec3<double>(0,0.5,0), vec3<double>(0,0,0.5), red));
+  // Floor
+  auto dark_grey = make_shared<lambertian>(color(.1, .1, .1));
+  world.add(make_shared<quad>(point3(-10, 0, -10), vec3<double>(20, 0, 0), vec3<double>(0, 0, 20), dark_grey));
+
+  // pyramid helper
+  auto add_pyramid = [&world](
+    double cx, 
+    double cz, 
+    double half, 
+    double height, 
+    shared_ptr<material> base_mat, 
+    shared_ptr<material> side_mat
+  ) {
+    point3 c(cx, 0.0, cz);
+    point3 p00 = c + point3(-half, 0.0, -half);
+    point3 p10 = c + point3( half, 0.0, -half);
+    point3 p11 = c + point3( half, 0.0,  half);
+    point3 p01 = c + point3(-half, 0.0,  half);
+    point3 apex = c + point3(0.0, height, 0.0);
+
+    // Base
+    world.add(make_shared<triag>(p00, p10 - p00, p01 - p00, base_mat));
+
+    // Sides
+    world.add(make_shared<triag>(p00, p10 - p00, apex - p00, side_mat));
+    world.add(make_shared<triag>(p10, p11 - p10, apex - p10, side_mat));
+    world.add(make_shared<triag>(p11, p01 - p11, apex - p11, side_mat));
+    world.add(make_shared<triag>(p01, p00 - p01, apex - p01, side_mat));
+  };
+
+  double row_z = -4.0;
+
+  add_pyramid(-4.0, row_z, 1.5, 2.8, red, red);
+  add_pyramid( 0.0, row_z, 1.5, 2.8, blue, blue);
+  add_pyramid( 4.0, row_z, 1.5, 2.8, green, green);
+
+  world = hittable_list(make_shared<bvh_node>(world));
 
   camera cam;
 
-  cam.aspect_ratio      = 16.0 / 9.0;
-  cam.image_width       = 400;
-  cam.samples_per_pixel = 100;
+  cam.aspect_ratio      = 4.0 / 3.0;
+  cam.image_width       = 800;
+  cam.samples_per_pixel = 1000;
   cam.max_depth         = 50;
-  cam.background        = color(0.70, 0.80, 1.00);
+  cam.background        = color(0.9, 0.9, 0.9);
 
-  cam.vfov     = 20;
-  cam.lookfrom = point3(13.0, 2.0, 3.0);
-  cam.lookat   = point3(0.0, 0.0, 0.0);
+  cam.vfov     = 52;
+  cam.lookfrom = point3(0.0, 3.0, 8.0);
+  cam.lookat   = point3(0.0, 1.5, row_z);
   cam.vup      = vec3<double>(0.0, 1.0, 0.0);
-
-  cam.defocus_angle = 0.6;
-  cam.focus_dist    = 10.0;
 
   cam.render(world, timestamp("triangles"));
 }
@@ -516,9 +553,9 @@ void showcase_scene() {
   camera cam;
 
   cam.aspect_ratio      = 4.0 / 3.0;
-  cam.image_width       = 800; // 4000;
-  cam.samples_per_pixel = 1000;
-  cam.max_depth         = 4;
+  cam.image_width       = 1000; // 4000;
+  cam.samples_per_pixel = 10000;
+  cam.max_depth         = 25;
   cam.background        = color(0.1, 0.1, 0.15);
 
   cam.vfov     = 70;
