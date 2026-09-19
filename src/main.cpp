@@ -458,6 +458,84 @@ void triangles() {
   cam.render(world, timestamp("triangles"));
 }
 
+void glass_balls() {
+  hittable_list world;
+
+  auto floor_mat = make_shared<metal>(color(0.06, 0.06, 0.06), 0.2);
+  world.add(make_shared<quad>(point3(-10, 0, -10), vec3<double>(20, 0, 0), vec3<double>(0, 0, 20), floor_mat));
+
+  auto glass = make_shared<dielectric>(1.5);
+  world.add(make_shared<sphere>(point3(0.0, 1.0, 0.0), 1.0, glass));
+
+  auto bulb = make_shared<diffuse_light>(color(2.0, 4.5, 6.0));
+  world.add(make_shared<sphere>(point3(3.8, 3.2, 12.0), 3.0, bulb));
+
+  camera cam;
+
+  cam.aspect_ratio      = 16.0 / 9.0;
+  cam.image_width       = 500;
+  cam.samples_per_pixel = 500;
+  cam.max_depth         = 40;
+  cam.background        = color(0.0, 0.0, 0.0);
+
+  cam.vfov     = 30;
+  cam.lookfrom = point3(0.0, 2.0, 8.0);
+  cam.lookat   = point3(0.0, 1.0, 0.0);
+  cam.vup      = vec3<double>(0.0, 1.0, 0.0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world, timestamp("glass-balls"));
+}
+
+void glass_ball_bokeh() {
+  hittable_list world;
+
+  auto floor_mat = make_shared<metal>(color(0.06, 0.06, 0.06), 0.2);
+  world.add(make_shared<quad>(point3(-10, 0, -10), vec3<double>(20, 0, 0), vec3<double>(0, 0, 20), floor_mat));
+
+  auto glass = make_shared<dielectric>(1.5);
+  world.add(make_shared<sphere>(point3(0.0, 1.0, 0.0), 1.0, glass));
+
+  // Off-axis rim/back light, seen refracted through the ball.
+  auto bulb = make_shared<diffuse_light>(color(2.0, 4.5, 6.0));
+  world.add(make_shared<sphere>(point3(3.8, 3.2, 12.0), 3.0, bulb));
+
+  // Small distant lights scattered behind/around the ball, out of focus,
+  // to turn into soft bokeh discs.
+  struct bokeh_light { point3 pos; double radius; color col; };
+  std::vector<bokeh_light> bokeh_lights = {
+    {point3(-5.0, 2.2,  -8.0), 0.40, color(6.0, 3.0, 1.0)},
+    {point3( 4.0, 3.2, -10.0), 0.35, color(6.0, 2.0, 4.0)},
+    {point3(-3.0, 0.9, -14.0), 0.45, color(1.0, 4.0, 6.0)},
+    {point3( 6.0, 1.2, -16.0), 0.30, color(4.0, 1.0, 6.0)},
+    {point3(-7.0, 3.5, -18.0), 0.50, color(6.0, 4.0, 1.0)},
+    {point3( 2.0, 4.0, -20.0), 0.40, color(1.0, 5.0, 4.0)},
+    {point3( 7.0, 0.4, -22.0), 0.35, color(6.0, 1.0, 5.0)},
+    {point3(-2.0, 0.3, -25.0), 0.40, color(2.0, 3.0, 6.0)},
+  };
+  for (const auto& bl : bokeh_lights) {
+    world.add(make_shared<sphere>(bl.pos, bl.radius, make_shared<diffuse_light>(bl.col)));
+  }
+
+  camera cam;
+
+  cam.aspect_ratio      = 16.0 / 9.0;
+  cam.image_width       = 3840;
+  cam.samples_per_pixel = 2500;
+  cam.max_depth         = 1000;
+  cam.background        = color(0.0, 0.0, 0.0);
+
+  cam.vfov     = 30;
+  cam.lookfrom = point3(0.0, 2.0, 8.0);
+  cam.lookat   = point3(0.0, 1.0, 0.0);
+  cam.vup      = vec3<double>(0.0, 1.0, 0.0);
+
+  cam.defocus_angle = 4.0;
+
+  cam.render(world, timestamp("glass-ball-bokeh"));
+}
+
 void showcase_scene() {
   hittable_list world;
 
@@ -587,6 +665,8 @@ int main(int argc, char* argv[]) {
     case 9:  final_scene(800, 10000, 40); break;
     case 10: final_scene(400, 250, 4);    break;
     case 11: triangles();                 break;
+    case 12: glass_balls();               break;
+    case 13: glass_ball_bokeh();          break;
     default: showcase_scene();            break;
   }
   return 0;
