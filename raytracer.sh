@@ -75,9 +75,10 @@ case "${cmd}" in
       echo "Error: ffmpeg not found. Please install it to use convert." >&2
       exit 3
     fi
-    out="${target%.hdr}.jpg"
+    # PNG, not JPEG: JPEG's 8x8 DCT blocks band the dark gradients
+    out="${target%.hdr}.png"
     echo "Converting ${target} -> ${out}"
-    ffmpeg -y -loglevel error -i "${target}" "${out}"
+    ffmpeg -y -loglevel error -i "${target}" -pix_fmt rgb24 "${out}"
     echo "Wrote: ${out}"
     ;;
 
@@ -104,9 +105,9 @@ case "${cmd}" in
       echo "No render found in ${RENDERS_DIR}/" >&2
       exit 4
     fi
-    out="${target%.*}.jpg"
+    out="${target%.*}.png"
     echo "Converting ${target} -> ${out}"
-    ffmpeg -y -loglevel error -i "${target}" "${out}"
+    ffmpeg -y -loglevel error -i "${target}" -pix_fmt rgb24 "${out}"
 
     open "${out}" || echo "Output at: ${out}"
     ;;
